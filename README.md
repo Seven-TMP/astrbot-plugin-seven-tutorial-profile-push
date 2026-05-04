@@ -33,7 +33,7 @@
 
 将本插件目录放入 AstrBot 的 `data/plugins/` 目录下，然后在 AstrBot WebUI 中启用插件即可。
 
-或通过 AstrBot 插件市场安装（需先发布到 GitHub）。
+或通过 AstrBot 插件市场安装。
 
 ## 数据存储
 

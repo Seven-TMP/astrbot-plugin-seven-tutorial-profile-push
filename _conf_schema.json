@@ -1,0 +1,26 @@
+{
+  "owner_qqs": {
+    "description": "主人QQ",
+    "type": "string",
+    "hint": "多个 QQ 用英文逗号分隔，主人拥有管理推送的权限",
+    "default": ""
+  },
+  "profile_url": {
+    "description": "用户主页地址",
+    "type": "string",
+    "hint": "Seven欧卡教程网的用户主页 URL",
+    "default": "https://ets2.seventmp.cn/profile/13"
+  },
+  "post_api_url": {
+    "description": "帖子接口地址",
+    "type": "string",
+    "hint": "返回 JSON 格式的帖子列表接口，用于获取最新帖子",
+    "default": "https://ets2.seventmp.cn/api/users/13/posts?page=1&limit=1"
+  },
+  "check_interval_seconds": {
+    "description": "检查间隔（秒）",
+    "type": "int",
+    "hint": "定时检查最新帖子的间隔时间，最小 10 秒",
+    "default": 180
+  }
+}

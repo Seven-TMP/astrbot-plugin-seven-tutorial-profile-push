@@ -1,0 +1,7 @@
+name: astrbot_plugin_seventmp_push
+display_name: Seven欧卡教程网 主页推送
+desc: 监控 Seven欧卡教程网主页最新帖子并推送到指定群聊，支持群内指令控制推送开关。
+short_desc: Seven欧卡教程网最新帖子推送
+version: v1.0.0
+author: Seven
+repo: https://github.com/Seven-TMP/astrbot_plugin_seventmp_push

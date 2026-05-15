@@ -14,6 +14,14 @@ from astrbot.api import logger, AstrBotConfig
 # 持久化数据目录名（存储在 AstrBot 的 data 目录下）
 DATA_DIR_NAME = "astrbot_plugin_seventmp_push"
 
+# 当前插件版本（发版时同步修改 metadata.yaml 中的 version）
+CURRENT_VERSION = "1.0.0"
+# 远端最新版本元数据 URL（GitHub raw 的 metadata.yaml）
+LATEST_VERSION_URL = (
+    "https://raw.githubusercontent.com/Seven-TMP/"
+    "astrbot-plugin-seven-tutorial-profile-push/master/metadata.yaml"
+)
+
 
 @register(
     "astrbot_plugin_seventmp_push",
@@ -37,6 +45,9 @@ class SevenTMPProfilePush(Star):
             "enabled_groups": {},
         }
 
+        # 远端最新版本号（运行时缓存，不持久化）
+        self.latest_version: str = ""
+
         # 确保数据目录存在
         self.data_dir = os.path.join("data", DATA_DIR_NAME)
         os.makedirs(self.data_dir, exist_ok=True)
@@ -50,8 +61,11 @@ class SevenTMPProfilePush(Star):
 
     async def initialize(self):
         """插件初始化完成后执行首次检查"""
+        await self._check_latest_version()
         await self._check_and_notify()
-        logger.info("Seven欧卡教程网 主页推送插件已启动")
+        logger.info(
+            f"Seven欧卡教程网 主页推送插件已启动 (v{CURRENT_VERSION})"
+        )
 
     # ==================== 持久化 ====================
 
@@ -129,6 +143,56 @@ class SevenTMPProfilePush(Star):
 
         return False
 
+    # ==================== 版本检查 ====================
+
+    @staticmethod
+    def _parse_version(v: str) -> list:
+        """将版本号字符串解析为数字列表，例如 'v1.10.2' -> [1, 10, 2]"""
+        return [int(x) for x in re.findall(r"\d+", v)]
+
+    @classmethod
+    def _is_newer_version(cls, remote: str, local: str) -> bool:
+        """判断 remote 版本号是否高于 local"""
+        return cls._parse_version(remote) > cls._parse_version(local)
+
+    def _has_update(self) -> bool:
+        """是否检测到有可更新的新版本"""
+        if not self.latest_version:
+            return False
+        return self._is_newer_version(self.latest_version, CURRENT_VERSION)
+
+    async def _check_latest_version(self):
+        """拉取远端 metadata.yaml 解析最新版本号，失败时静默忽略"""
+        try:
+            timeout = aiohttp.ClientTimeout(total=10)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(LATEST_VERSION_URL) as resp:
+                    if resp.status != 200:
+                        return
+                    text = await resp.text()
+            m = re.search(r"^version:\s*v?([\d.]+)", text, re.MULTILINE)
+            if not m:
+                return
+            remote = m.group(1)
+            self.latest_version = remote
+            if self._is_newer_version(remote, CURRENT_VERSION):
+                logger.warn(
+                    f"[Seven欧卡教程网推送] 发现新版本 v{remote}，"
+                    f"当前 v{CURRENT_VERSION}，请尽快更新"
+                )
+        except Exception:
+            # 版本检查失败不影响主功能
+            pass
+
+    def _build_update_notice(self) -> str:
+        """构造更新提示尾巴，未检测到新版本时返回空字符串"""
+        if not self._has_update():
+            return ""
+        return (
+            f"\n\n⚠️ 推送插件有新版本 v{self.latest_version}"
+            f"（当前 v{CURRENT_VERSION}），请管理员尽快更新"
+        )
+
     @staticmethod
     def _decode_html(text: str) -> str:
         """简易 HTML 实体解码和标签清除"""
@@ -197,10 +261,9 @@ class SevenTMPProfilePush(Star):
 
     # ==================== 推送逻辑 ====================
 
-    @staticmethod
-    def _build_post_message(post: dict) -> str:
-        """构造帖子推送消息"""
-        return f"{post['title']}\n{post['url']}"
+    def _build_post_message(self, post: dict) -> str:
+        """构造帖子推送消息，附加更新提示尾巴（如有）"""
+        return f"{post['title']}\n{post['url']}{self._build_update_notice()}"
 
     def _build_status_message(self, umo: str) -> str:
         """构造推送状态消息"""
@@ -213,9 +276,13 @@ class SevenTMPProfilePush(Star):
             last_check = dt.strftime("%Y/%m/%d %H:%M:%S")
 
         profile_url = str(self.config.get("profile_url", ""))
+        version_line = f"插件版本: v{CURRENT_VERSION}"
+        if self._has_update():
+            version_line += f" → 有新版本 v{self.latest_version} 可更新"
         return "\n".join(
             [
                 "[Seven欧卡教程网 推送状态]",
+                version_line,
                 f"当前群推送: {'已开启' if self._is_group_enabled(umo) else '未开启'}",
                 f"检查间隔: {self._normalize_interval()} 秒",
                 f"接口地址: {self.config.get('post_api_url', '')}",
@@ -295,6 +362,7 @@ class SevenTMPProfilePush(Star):
                 interval = self._normalize_interval()
                 await asyncio.sleep(interval)
                 try:
+                    await self._check_latest_version()
                     await self._check_and_notify()
                 except Exception as e:
                     logger.warn(f"[Seven欧卡教程网推送] 定时检查异常: {e}")

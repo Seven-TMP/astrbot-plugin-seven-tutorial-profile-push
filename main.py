@@ -85,12 +85,8 @@ class SevenTMPProfilePush(Star):
         return set(s.strip() for s in re.split(r"[,\n，]", owner_str) if s.strip())
 
     def _normalize_interval(self) -> int:
-        """获取合法的检查间隔（最小 10 秒）"""
-        try:
-            val = int(self.config.get("check_interval_seconds", 180) or 180)
-        except (ValueError, TypeError):
-            val = 180
-        return max(10, val)
+        """检查间隔（秒），写死为 1800 秒（30 分钟），不提供配置项"""
+        return 1800
 
     def _is_group_enabled(self, umo: str) -> bool:
         """判断某个群是否已开启推送"""

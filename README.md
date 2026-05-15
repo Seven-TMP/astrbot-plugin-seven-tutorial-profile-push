@@ -16,7 +16,8 @@
 | `owner_qqs` | `string` | `""` | 主人QQ，多个用英文逗号分隔 |
 | `profile_url` | `string` | `https://ets2.seventmp.cn/profile/13` | 用户主页地址 |
 | `post_api_url` | `string` | `https://ets2.seventmp.cn/api/users/13/posts?page=1&limit=1` | 帖子接口地址 |
-| `check_interval_seconds` | `int` | `180` | 检查间隔（秒），最小 10 秒 |
+
+> 检查间隔已写死为 **1800 秒（30 分钟）**，不再提供配置项。
 
 ## 群内指令
 

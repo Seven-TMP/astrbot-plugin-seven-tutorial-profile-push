@@ -16,11 +16,5 @@
     "type": "string",
     "hint": "返回 JSON 格式的帖子列表接口，用于获取最新帖子",
     "default": "https://ets2.seventmp.cn/api/users/13/posts?page=1&limit=1"
-  },
-  "check_interval_seconds": {
-    "description": "检查间隔（秒）",
-    "type": "int",
-    "hint": "定时检查最新帖子的间隔时间，最小 10 秒",
-    "default": 180
   }
 }
